@@ -60,13 +60,26 @@ func GetInvalidIds(idRange []int) []int {
 
 func IsValid(id int) bool {
 	stringId := strconv.Itoa(id)
-	if (len(stringId) % 2) != 0 {
-		return true
+	i := 0
+	var repeatingPattern string
+	for i < int(len(stringId)/2) {
+		repeatingPattern = stringId[:i+1]
+		if ((len(stringId) - len(repeatingPattern)) % len(repeatingPattern)) == 0 {
+			j := i + 1
+			canBeInvalid := true
+			for j < len(stringId) && canBeInvalid {
+				if repeatingPattern[j%len(repeatingPattern)] != stringId[j] {
+					canBeInvalid = false
+				}
+				j++
+			}
+			if canBeInvalid {
+				return false
+			}
+		}
+		i++
 	}
-	halfLength := len(stringId) / 2
-	firsthalf := stringId[:halfLength]
-	secondHalf := stringId[halfLength:]
-	return strings.Compare(firsthalf, secondHalf) != 0
+	return true
 }
 
 func main() {
