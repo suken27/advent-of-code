@@ -24,30 +24,24 @@ func ReadFileAsStringArray(fileName string) ([]string, error) {
 	return stringArray, nil
 }
 
-func calculateHighestJoltage(battery string) (int, error) {
-	i := 1
+func calculateHighestJoltage(battery string, batteriesToEnable int) string {
+
+	i := 0
 	maxFirstDigitIndex := 0
 	maxFirstDigit := battery[maxFirstDigitIndex]
-	for i < len(battery)-1 {
+	for i < len(battery)-batteriesToEnable+1 {
 		if battery[i] > maxFirstDigit {
 			maxFirstDigitIndex = i
 			maxFirstDigit = battery[maxFirstDigitIndex]
 		}
 		i++
 	}
-	maxSecondDigit := battery[maxFirstDigitIndex+1]
-	i = maxFirstDigitIndex + 1
-	for i < len(battery) {
-		if battery[i] > maxSecondDigit {
-			maxSecondDigit = battery[i]
-		}
-		i++
+	if batteriesToEnable == 1 {
+		return string(maxFirstDigit)
+	} else {
+		value := calculateHighestJoltage(battery[maxFirstDigitIndex+1:], batteriesToEnable-1)
+		return string(maxFirstDigit) + value
 	}
-	result, err := strconv.Atoi(string(maxFirstDigit) + string(maxSecondDigit))
-	if err != nil {
-		return -1, err
-	}
-	return result, nil
 }
 
 func main() {
@@ -59,12 +53,14 @@ func main() {
 	i := 0
 	total := 0
 	for i < len(batteryArray) {
-		value, err := calculateHighestJoltage(batteryArray[i])
+		value := calculateHighestJoltage(batteryArray[i], 12)
+		intValue, err := strconv.Atoi(value)
 		if err != nil {
 			println(err)
 			return
 		}
-		total += value
+		println(intValue)
+		total += intValue
 		i++
 	}
 	println(total)
