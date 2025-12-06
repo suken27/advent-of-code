@@ -54,6 +54,28 @@ func IsAccesible(matrix [][]bool, x int, y int) (bool, error) {
 	return true, nil
 }
 
+func RemoveAccesibles(matrix [][]bool) (int, [][]bool, error) {
+	updatedMatrix := [][]bool{}
+	totalAccesibleRolls := 0
+	for i := 0; i < len(matrix); i++ {
+		updatedRow := []bool{}
+		for j := 0; j < len(matrix[i]); j++ {
+			isAccessible, err := IsAccesible(matrix, i, j)
+			if err != nil {
+				return -1, nil, err
+			}
+			if isAccessible {
+				updatedRow = append(updatedRow, false)
+				totalAccesibleRolls++
+			} else {
+				updatedRow = append(updatedRow, matrix[i][j])
+			}
+		}
+		updatedMatrix = append(updatedMatrix, updatedRow)
+	}
+	return totalAccesibleRolls, updatedMatrix, nil
+}
+
 func main() {
 	rollsMatrix, error := ReadFileAsBooleanMatrix("input.txt")
 	if error != nil {
@@ -61,17 +83,16 @@ func main() {
 		return
 	}
 	totalAccesibleRolls := 0
-	for i := 0; i < len(rollsMatrix); i++ {
-		for j := 0; j < len(rollsMatrix[i]); j++ {
-			isAccessible, err := IsAccesible(rollsMatrix, i, j)
-			if err != nil {
-				fmt.Printf("%w\n", err)
-				return
-			}
-			if isAccessible {
-				totalAccesibleRolls++
-			}
+	accessedRolls := 1
+	for accessedRolls > 0 {
+		newAccessedRolls, updatedMatrix, err := RemoveAccesibles(rollsMatrix)
+		accessedRolls = newAccessedRolls
+		if err != nil {
+			println(err)
+			return
 		}
+		totalAccesibleRolls += accessedRolls
+		rollsMatrix = updatedMatrix
 	}
 	println(totalAccesibleRolls)
 }
