@@ -7,6 +7,17 @@ import (
 	"strings"
 )
 
+func RemoveOverlap(range1 []int, range2 []int) []int {
+	if (range1[0] <= range2[0] && range1[1] >= range2[0]) || (range1[0] <= range2[1] && range1[1] >= range2[1]) {
+		//fmt.Printf("%d-%d overlaps with %d-%d\n", range1[0], range1[1], range2[0], range2[1])
+		return []int{min(range1[0], range2[0]), max(range1[1], range2[1])}
+	} else if (range2[0] <= range1[0] && range2[1] >= range1[0]) || (range2[0] <= range1[1] && range2[1] >= range1[1]) {
+		//fmt.Printf("%d-%d overlaps with %d-%d\n", range1[0], range1[1], range2[0], range2[1])
+		return []int{min(range1[0], range2[0]), max(range1[1], range2[1])}
+	}
+	return nil
+}
+
 func main() {
 	// Open the file
 	file, err := os.Open("input.txt")
@@ -19,6 +30,7 @@ func main() {
 	scanner := bufio.NewScanner(file)
 	var freshRanges [][]int
 	readingRanges := true
+
 	for readingRanges && scanner.Scan() {
 		text := scanner.Text()
 		if text != "" {
@@ -38,21 +50,32 @@ func main() {
 			readingRanges = false
 		}
 	}
-	totalFreshItems := 0
-	for scanner.Scan() {
-		text := scanner.Text()
-		foodId, foodIdErr := strconv.Atoi(text)
-		if foodIdErr != nil {
-			println(foodIdErr)
-			return
+	includedRanges := make([]bool, len(freshRanges))
+	for i := 0; i < len(freshRanges); i++ {
+		includedRanges[i] = false
+	}
+	for i := 0; i < len(freshRanges); i++ {
+		if includedRanges[i] {
+			continue
 		}
-		itemFound := false
-		for i := 0; i < len(freshRanges) && !itemFound; i++ {
-			if foodId >= freshRanges[i][0] && foodId <= freshRanges[i][1] {
-				itemFound = true
-				totalFreshItems++
+		for j := 0; j < len(freshRanges); j++ {
+			if i == j || includedRanges[j] {
+				continue
+			}
+			resultingRange := RemoveOverlap(freshRanges[i], freshRanges[j])
+			if resultingRange != nil {
+				freshRanges[i][0] = resultingRange[0]
+				freshRanges[i][1] = resultingRange[1]
+				includedRanges[j] = true
+				j = 0
 			}
 		}
 	}
-	println(totalFreshItems)
+	totalFreshIds := 0
+	for i := 0; i < len(freshRanges); i++ {
+		if !includedRanges[i] {
+			totalFreshIds += freshRanges[i][1] - freshRanges[i][0] + 1
+		}
+	}
+	println(totalFreshIds)
 }
