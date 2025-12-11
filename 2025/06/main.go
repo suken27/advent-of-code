@@ -5,84 +5,87 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"regexp"
 	"strconv"
 	"strings"
 )
 
-func ReadFileAsStringMatrix(fileName string) ([][]string, error) {
+func ReadFileAsStringArray(fileName string) ([]string, error) {
 	file, err := os.Open(fileName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open file: %w", err)
 	}
 	defer file.Close()
 
-	var stringMatrix [][]string
+	var stringArray []string
 	scanner := bufio.NewScanner(file)
-	regexExpresion := regexp.MustCompile(` +`)
 	for scanner.Scan() {
-		line := scanner.Text()
-		line = regexExpresion.ReplaceAllString(line, " ")
-		slices := strings.Split(line, " ")
-		stringMatrix = append(stringMatrix, slices)
+		stringArray = append(stringArray, scanner.Text())
 	}
 
-	return stringMatrix, nil
+	return stringArray, nil
 }
 
-func TransposeMatrix(matrix [][]string) [][]string {
-	transposed := make([][]string, len(matrix[0]))
-	for i := 0; i < len(matrix); i++ {
-		for j := 0; j < len(matrix[0]); j++ {
-			transposed[j] = append(transposed[j], matrix[i][j])
+func GetNumberInColumn(stringArray []string, index int) (int, error) {
+	var stringBuilder strings.Builder
+	for i := 0; i < len(stringArray)-1; i++ {
+		if stringArray[i][index] != ' ' {
+			stringBuilder.WriteByte(stringArray[i][index])
 		}
 	}
-	return transposed
-}
-
-func CalculateColumn(column []string) (int, error) {
-	intValue, err := strconv.Atoi(column[0])
+	intValue, err := strconv.Atoi(stringBuilder.String())
 	if err != nil {
 		return -1, err
 	}
-	total := intValue
-	columnLength := len(column)
-	switch column[columnLength-1] {
-	case "+":
-		for i := 1; i < columnLength-1; i++ {
-			intValue, err = strconv.Atoi(column[i])
-			if err != nil {
-				return -1, err
-			}
-			total += intValue
-		}
-	case "*":
-		for i := 1; i < columnLength-1; i++ {
-			intValue, err = strconv.Atoi(column[i])
-			if err != nil {
-				return -1, err
-			}
-			total *= intValue
-		}
-	default:
-		return -1, fmt.Errorf("operand %s is not supported", column[columnLength-1])
+	return intValue, nil
+}
+
+func AddArray(array []int) int {
+	total := 0
+	for i := 0; i < len(array); i++ {
+		total += array[i]
 	}
-	return total, nil
+	return total
+}
+
+func MultiplyArray(array []int) int {
+	total := array[0]
+	for i := 1; i < len(array); i++ {
+		total *= array[i]
+	}
+	return total
 }
 
 func main() {
-	stringMatrix, err := ReadFileAsStringMatrix("input.txt")
+	stringArray, err := ReadFileAsStringArray("input.txt")
 	if err != nil {
 		log.Fatal(err)
 	}
-	stringMatrix = TransposeMatrix(stringMatrix)
-	grandTotal := 0
-	for i := 0; i < len(stringMatrix); i++ {
-		subTotal, calcErr := CalculateColumn(stringMatrix[i])
-		if calcErr != nil {
-			log.Fatal(calcErr)
+	total := 0
+	subTotal := 0
+	for i := 0; i < len(stringArray[0]); {
+		var numberArray []int
+		number, err := GetNumberInColumn(stringArray, i)
+		if err != nil {
+			log.Fatal(err)
 		}
-		grandTotal += subTotal
+		numberArray = append(numberArray, number)
+		j := i + 1
+		for ; j < len(stringArray[0]) && (j+1 >= len(stringArray[0]) || stringArray[len(stringArray)-1][j+1] == ' '); j++ {
+			number, err = GetNumberInColumn(stringArray, j)
+			if err != nil {
+				log.Fatal(err)
+			}
+			numberArray = append(numberArray, number)
+		}
+		if stringArray[len(stringArray)-1][i] == '+' {
+			subTotal = AddArray(numberArray)
+		} else if stringArray[len(stringArray)-1][i] == '*' {
+			subTotal = MultiplyArray(numberArray)
+		} else {
+			log.Fatalf("unexpected operator %c", stringArray[len(stringArray)-1][i])
+		}
+		total += subTotal
+		i += j - i + 1
 	}
-	println(grandTotal)
+	println(total)
 }
