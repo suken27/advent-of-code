@@ -32,23 +32,24 @@ func ReadFileAsBooleanMatrix(fileName string) ([][]bool, int, error) {
 	return booleanMatrix, startingPoint, nil
 }
 
-func CalculateSplits(matrix [][]bool, beamMatrix [][]bool, startingRow int, startingColumn int) int {
+func CalculateSplits(matrix [][]bool, beamMatrix [][]int, startingRow int, startingColumn int) int {
 	if startingRow >= len(matrix)-1 || startingColumn < 0 || startingColumn > len(matrix[startingRow])-1 {
 		return 0
 	}
 	if !matrix[startingRow+1][startingColumn] {
-		if beamMatrix[startingRow+1][startingColumn] {
-			return 0
+		if beamMatrix[startingRow+1][startingColumn] != -1 {
+			return beamMatrix[startingRow+1][startingColumn]
 		}
-		beamMatrix[startingRow+1][startingColumn] = true
-		return CalculateSplits(matrix, beamMatrix, startingRow+1, startingColumn)
+		beamMatrix[startingRow+1][startingColumn] = CalculateSplits(matrix, beamMatrix, startingRow+1, startingColumn)
+		return beamMatrix[startingRow+1][startingColumn]
 	}
-	if beamMatrix[startingRow+1][startingColumn-1] && beamMatrix[startingRow+1][startingColumn+1] {
-		return 0
+	if beamMatrix[startingRow+1][startingColumn-1] == -1 {
+		beamMatrix[startingRow+1][startingColumn-1] = CalculateSplits(matrix, beamMatrix, startingRow+1, startingColumn-1)
 	}
-	beamMatrix[startingRow+1][startingColumn-1] = true
-	beamMatrix[startingRow+1][startingColumn+1] = true
-	return CalculateSplits(matrix, beamMatrix, startingRow+1, startingColumn-1) + CalculateSplits(matrix, beamMatrix, startingRow+1, startingColumn+1) + 1
+	if beamMatrix[startingRow+1][startingColumn+1] == -1 {
+		beamMatrix[startingRow+1][startingColumn+1] = CalculateSplits(matrix, beamMatrix, startingRow+1, startingColumn+1)
+	}
+	return beamMatrix[startingRow+1][startingColumn-1] + beamMatrix[startingRow+1][startingColumn+1] + 1
 }
 
 func main() {
@@ -56,12 +57,12 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	beamMatrix := make([][]bool, len(booleanMatrix))
+	beamMatrix := make([][]int, len(booleanMatrix))
 	for i := 0; i < len(booleanMatrix); i++ {
-		beamMatrix[i] = make([]bool, len(booleanMatrix[i]))
+		beamMatrix[i] = make([]int, len(booleanMatrix[i]))
 		for j := 0; j < len(booleanMatrix[i]); j++ {
-			beamMatrix[i][j] = false
+			beamMatrix[i][j] = -1
 		}
 	}
-	println(CalculateSplits(booleanMatrix, beamMatrix, 0, startingPoint))
+	println(CalculateSplits(booleanMatrix, beamMatrix, 0, startingPoint) + 1)
 }
